@@ -106,16 +106,14 @@ Creates the dataset for the sub-group in the SAS library of choice.
             UniqueID=USUBJID;
     	run;
 /****************************************************************************** 
-Creates the dataset for the sub-group in the SAS library of choice.
+Define a macro variable which holds the required data observations for each 
+race group.
 ********************************************************************************/;
 
-		/* Pulls the known reference aggregation values and stores them in macro variables */
 		%let val1agg = 500;
-        %let val2agg = 70;
 
-		/* Prints the macro aggregation variables to the log */
+		/* Prints the macro  variable to the log */
 		%put &val1agg; 
-		%put &val2agg; 
 
 
 		proc optmodel;
@@ -124,19 +122,25 @@ Creates the dataset for the sub-group in the SAS library of choice.
             str USUBJID{RACE};
 
 /****************************************************************************** 
-Creates the dataset for the sub-group in the SAS library of choice.
+Read in the data for the sub-group into the optimisation procedure
 ********************************************************************************/;
     		read data DDE.DM_&i. into RACE=[USUBJID];
 
-		/* Decision variables */
+/****************************************************************************** 
+Create a decision variable to indicate whether this record is selected or not 
+selected in the final table
+********************************************************************************/;
     		var x{RACE} binary;
 
-			/* Objective: maximize values */
+/****************************************************************************** 
+Objective: maximise the nunber of data observations per RACE group
+********************************************************************************/;
     		max TotalValue = sum{i in RACE} x[i];
 
-    	/* Constraints */
+    
 /****************************************************************************** 
-Creates the dataset for the sub-group in the SAS library of choice.
+Constraints: Imposes a minimum and maximum condition for the number of records
+which are defined within a margin of error (2% in this case).
 ********************************************************************************/;
         /* Margin of Errors are defined with constraints so .98 and 1.02 for example means a 5 percent margin of error in either direction */
     		con VAL1Limit: .98*&val1agg. <= sum{i in RACE} x[i] <= 1.02*&val1agg.;
